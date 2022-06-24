@@ -45,6 +45,7 @@ catch (Exception e) {
 }
 
 gradlePlugin {
+    automatedPublishing = false
     plugins {
         demoPlugin {
             id = pluginId
