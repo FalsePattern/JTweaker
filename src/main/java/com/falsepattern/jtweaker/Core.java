@@ -48,6 +48,7 @@ public class Core {
         Files.walkFileTree(root.toPath(), new FileVisitor<Path>() {
             boolean nuke = false;
             Path nukeDir = null;
+
             @Override
             public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
                 if (dir.getFileName().toString().equals("stubpackage")) {
