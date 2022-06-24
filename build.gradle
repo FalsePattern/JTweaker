@@ -1,0 +1,114 @@
+plugins {
+    id 'idea'
+    id 'java-gradle-plugin'
+    id 'maven-publish'
+    id('org.ajoberstar.grgit') version('3.1.1')
+    id("com.palantir.git-version") version("0.12.3")
+}
+
+
+def projectJavaVersion = JavaLanguageVersion.of(8)
+
+java {
+    toolchain {
+        languageVersion.set(projectJavaVersion)
+    }
+}
+
+idea {
+    module {
+        inheritOutputDirs = true
+        downloadJavadoc = true
+        downloadSources = true
+    }
+}
+
+if(JavaVersion.current() != JavaVersion.VERSION_1_8) {
+    throw new GradleException("This project requires Java 8, but it's running on " + JavaVersion.current())
+}
+
+checkPropertyExists("projectName")
+checkPropertyExists("projectGroup")
+checkPropertyExists("pluginId")
+checkPropertyExists("mainClass")
+checkPropertyExists("repositoryName")
+checkPropertyExists("repositoryURL")
+
+apply from: 'repositories.gradle'
+apply from: 'dependencies.gradle'
+
+try {
+    version = gitVersion()
+}
+catch (Exception e) {
+    throw new IllegalStateException("This mod must be version controlled by Git AND the repository must provide at least one tag!");
+}
+
+gradlePlugin {
+    plugins {
+        demoPlugin {
+            id = pluginId
+            implementationClass = mainClass
+        }
+    }
+}
+
+def checkPropertyExists(String propertyName) {
+    if (!project.hasProperty(propertyName)) {
+        throw new GradleException("This project requires a property \"" + propertyName + "\"! Please add it your \"gradle.properties\". You can find all properties and their description here: https://github.com/FalsePattern/ExampleMod1.7.10/blob/main/gradle.properties")
+    }
+}
+
+// publishing
+def getMavenSettingsCredentials = {
+    String userHome = System.getProperty( 'user.home' );
+    File mavenSettings = new File(userHome, '.m2/settings.xml')
+    def xmlSlurper = new XmlSlurper()
+    def output = xmlSlurper.parse(mavenSettings)
+    return output.'servers'.'server'
+}
+
+def getCredentials = {
+    try {
+        def entries = getMavenSettingsCredentials()
+        for (entry in entries) {
+            if (entry.'id'.text() == repositoryName) {
+                return [username: entry.username.text(), password: entry.password.text()]
+            }
+        }
+        throw new Exception();
+    } catch (Exception ignored) {
+        //Try from environment variables if file does not exist
+        String username = System.getenv('MAVEN_DEPLOY_USER')
+        String password = System.getenv('MAVEN_DEPLOY_PASSWORD')
+        if (username == null || password == null) {
+            return [username: null, password: null]
+        } else {
+            return [username: username, password: password]
+        }
+    }
+}
+
+publishing {
+    publications {
+        pluginPublication (MavenPublication) {
+            from(components.java)
+            groupId = projectGroup
+            artifactId = projectName
+            version = gitVersion()
+        }
+    }
+    repositories {
+        if (repositoryURL.trim() != "") {
+            maven {
+                name = repositoryName
+                url = repositoryURL
+                def creds = getCredentials()
+                credentials {
+                    username = creds == null ? 'none' : creds.username
+                    password = creds == null ? 'none' : creds.password
+                }
+            }
+        }
+    }
+}
