@@ -35,6 +35,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
@@ -98,6 +100,7 @@ public class Core {
     }
 
     private static void recurse(File root, Consumer<Path> classProcessor) throws IOException {
+        val executor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() - 1);
         Files.walkFileTree(root.toPath(), new FileVisitor<Path>() {
             boolean nuke = false;
             Path nukeDir = null;
@@ -114,7 +117,7 @@ public class Core {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (!nuke && file.getFileName().toString().endsWith(".class")) {
-                    classProcessor.accept(file);
+                    executor.execute(() -> classProcessor.accept(file));
                 } else if (nuke) {
                     Files.delete(file);
                 }
@@ -137,5 +140,15 @@ public class Core {
                 return FileVisitResult.CONTINUE;
             }
         });
+        executor.shutdown();
+        while (true) {
+            try {
+                if (executor.awaitTermination(10, TimeUnit.SECONDS)) {
+                    break;
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }
