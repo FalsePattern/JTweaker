@@ -23,7 +23,7 @@ idea {
     }
 }
 
-if(JavaVersion.current() != JavaVersion.VERSION_1_8) {
+if (JavaVersion.current() != JavaVersion.VERSION_1_8) {
     throw new GradleException("This project requires Java 8, but it's running on " + JavaVersion.current())
 }
 
@@ -41,7 +41,7 @@ try {
     version = gitVersion()
 }
 catch (Exception e) {
-    throw new IllegalStateException("This mod must be version controlled by Git AND the repository must provide at least one tag!");
+    throw new IllegalStateException("This project must be version controlled by Git AND the repository must provide at least one tag!")
 }
 
 gradlePlugin {
@@ -56,13 +56,13 @@ gradlePlugin {
 
 def checkPropertyExists(String propertyName) {
     if (!project.hasProperty(propertyName)) {
-        throw new GradleException("This project requires a property \"" + propertyName + "\"! Please add it your \"gradle.properties\". You can find all properties and their description here: https://github.com/FalsePattern/ExampleMod1.7.10/blob/main/gradle.properties")
+        throw new GradleException("This project requires a property \"" + propertyName + "\"! Please add it your \"gradle.properties\". You can find all properties and their description here: https://github.com/FalsePattern/JTweaker/blob/main/gradle.properties")
     }
 }
 
 // publishing
 def getMavenSettingsCredentials = {
-    String userHome = System.getProperty( 'user.home' );
+    String userHome = System.getProperty('user.home')
     File mavenSettings = new File(userHome, '.m2/settings.xml')
     def xmlSlurper = new XmlSlurper()
     def output = xmlSlurper.parse(mavenSettings)
@@ -77,7 +77,7 @@ def getCredentials = {
                 return [username: entry.username.text(), password: entry.password.text()]
             }
         }
-        throw new Exception();
+        throw new Exception()
     } catch (Exception ignored) {
         //Try from environment variables if file does not exist
         String username = System.getenv('MAVEN_DEPLOY_USER')
@@ -92,7 +92,7 @@ def getCredentials = {
 
 publishing {
     publications {
-        pluginPublication (MavenPublication) {
+        pluginPublication(MavenPublication) {
             from(components.java)
             groupId = projectGroup
             artifactId = projectName
