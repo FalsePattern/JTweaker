@@ -16,13 +16,13 @@
  */
 package com.falsepattern.jtweaker;
 
-import com.sun.org.apache.bcel.internal.Constants;
-import com.sun.org.apache.bcel.internal.classfile.ClassParser;
-import com.sun.org.apache.bcel.internal.classfile.ConstantUtf8;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.val;
 import lombok.var;
+import org.apache.bcel.Const;
+import org.apache.bcel.classfile.ClassParser;
+import org.apache.bcel.classfile.ConstantUtf8;
 import org.gradle.api.Project;
 
 import java.io.File;
@@ -46,7 +46,7 @@ public class Core {
                 val length = cp.getLength();
                 for (int i = 0; i < length; i++) {
                     val constant = cp.getConstant(i);
-                    if (constant != null && constant.getTag() == Constants.CONSTANT_Utf8) {
+                    if (constant != null && constant.getTag() == Const.CONSTANT_Utf8) {
                         val utf8 = (ConstantUtf8) constant;
                         var bytes = utf8.getBytes();
                         if (bytes.contains("stubpackage/")) {
