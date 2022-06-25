@@ -16,6 +16,7 @@
  */
 package com.falsepattern.jtweaker;
 
+import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.val;
 import lombok.var;
@@ -34,6 +35,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.Consumer;
 
 public class Core {
+    @SuppressWarnings("deprecation")
     @SneakyThrows
     public static void removeStub(Project project) {
         recurse(new File(project.getBuildDir(), "classes"), (file) -> {
@@ -49,11 +51,12 @@ public class Core {
                         var bytes = utf8.getBytes();
                         if (bytes.contains("stubpackage/")) {
                             bytes = bytes.substring(bytes.indexOf("stubpackage/") + "stubpackage/".length());
-                            cp.setConstant(i, new ConstantUtf8(bytes));
+                            utf8.setBytes(bytes);
                         }
                     }
                 }
-                clazz.dump(Files.newOutputStream(file));
+                @Cleanup val out = Files.newOutputStream(file);
+                clazz.dump(out);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
