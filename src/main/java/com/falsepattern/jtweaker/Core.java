@@ -22,6 +22,8 @@ import lombok.val;
 import lombok.var;
 import org.apache.bcel.Const;
 import org.apache.bcel.classfile.ClassParser;
+import org.apache.bcel.classfile.Constant;
+import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.ConstantUtf8;
 import org.gradle.api.Project;
 
@@ -32,9 +34,14 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.ArrayList;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 public class Core {
+
+    private static final Pattern fullMatcher = Pattern.compile("(?:\\w+/)*stubpackage/((?:\\w+/)*\\w+)");
+    private static final Pattern partialMatcher = Pattern.compile("L" + fullMatcher.pattern() + ";");
     @SuppressWarnings("deprecation")
     @SneakyThrows
     public static void removeStub(Project project) {
@@ -47,12 +54,26 @@ public class Core {
                 for (int i = 0; i < length; i++) {
                     val constant = cp.getConstant(i);
                     if (constant != null && constant.getTag() == Const.CONSTANT_Utf8) {
-                        val utf8 = (ConstantUtf8) constant;
+                        var utf8 = (ConstantUtf8) constant;
                         var bytes = utf8.getBytes();
-                        if (bytes.contains("stubpackage/")) {
-                            bytes = bytes.substring(bytes.indexOf("stubpackage/") + "stubpackage/".length());
-                            utf8.setBytes(bytes);
+                        var matcher = fullMatcher.matcher(bytes);
+                        if (matcher.matches()) {
+                            bytes = matcher.group(1);
+                        } else {
+                            matcher = partialMatcher.matcher(bytes);
+                            val result = new StringBuilder();
+                            int currPos = 0;
+                            while (matcher.find()) {
+                                result.append(bytes, currPos, matcher.start());
+                                result.append('L');
+                                result.append(matcher.group(1));
+                                result.append(';');
+                                currPos = matcher.end();
+                            }
+                            result.append(bytes, currPos, bytes.length());
+                            bytes = result.toString();
                         }
+                        cp.setConstant(i, new ConstantUtf8(bytes));
                     }
                 }
                 @Cleanup val out = Files.newOutputStream(file);
