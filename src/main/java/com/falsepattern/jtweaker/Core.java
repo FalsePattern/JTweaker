@@ -22,8 +22,6 @@ import lombok.val;
 import lombok.var;
 import org.apache.bcel.Const;
 import org.apache.bcel.classfile.ClassParser;
-import org.apache.bcel.classfile.Constant;
-import org.apache.bcel.classfile.ConstantPool;
 import org.apache.bcel.classfile.ConstantUtf8;
 import org.gradle.api.Project;
 
@@ -34,7 +32,6 @@ import java.nio.file.FileVisitor;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.util.ArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -44,7 +41,7 @@ public class Core {
 
     private static final Pattern fullMatcher = Pattern.compile("(?:\\w+/)*stubpackage/((?:\\w+/)*\\w+)");
     private static final Pattern partialMatcher = Pattern.compile("L" + fullMatcher.pattern() + ";");
-    @SuppressWarnings("deprecation")
+
     @SneakyThrows
     public static void removeStub(Project project) {
         recurse(new File(project.getBuildDir(), "classes"), (file) -> {
