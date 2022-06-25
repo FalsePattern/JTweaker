@@ -51,33 +51,46 @@ public class Core {
                 val clazz = parser.parse();
                 val cp = clazz.getConstantPool();
                 val length = cp.getLength();
+                var modified = false;
                 for (int i = 0; i < length; i++) {
                     val constant = cp.getConstant(i);
                     if (constant != null && constant.getTag() == Const.CONSTANT_Utf8) {
                         var utf8 = (ConstantUtf8) constant;
                         var bytes = utf8.getBytes();
                         var matcher = fullMatcher.matcher(bytes);
+                        var matched = false;
                         if (matcher.matches()) {
+                            modified = true;
+                            matched = true;
                             bytes = matcher.group(1);
                         } else {
                             matcher = partialMatcher.matcher(bytes);
-                            val result = new StringBuilder();
-                            int currPos = 0;
-                            while (matcher.find()) {
-                                result.append(bytes, currPos, matcher.start());
-                                result.append('L');
-                                result.append(matcher.group(1));
-                                result.append(';');
-                                currPos = matcher.end();
+                            if (matcher.find()) {
+                                matched = true;
+                                modified = true;
+                                val result = new StringBuilder();
+                                int currPos = 0;
+                                do {
+                                    result.append(bytes, currPos, matcher.start());
+                                    result.append('L');
+                                    result.append(matcher.group(1));
+                                    result.append(';');
+                                    currPos = matcher.end();
+                                } while (matcher.find());
+                                result.append(bytes, currPos, bytes.length());
+                                bytes = result.toString();
                             }
-                            result.append(bytes, currPos, bytes.length());
-                            bytes = result.toString();
                         }
-                        cp.setConstant(i, new ConstantUtf8(bytes));
+                        if (matched) {
+                            cp.setConstant(i, new ConstantUtf8(bytes));
+                        }
                     }
                 }
-                @Cleanup val out = Files.newOutputStream(file);
-                clazz.dump(out);
+                if (modified) {
+                    @Cleanup
+                    val out = Files.newOutputStream(file);
+                    clazz.dump(out);
+                }
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
