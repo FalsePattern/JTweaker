@@ -39,7 +39,7 @@ import java.util.regex.Pattern;
 
 public class Core {
 
-    private static final Pattern fullMatcher = Pattern.compile("(?:\\w+/)*stubpackage/((?:\\w+/)*\\w+)");
+    private static final Pattern fullMatcher = Pattern.compile("(?:\\w+/)*stubpackage/((?:\\w+/)*\\w+(\\$\\w+)*)");
     private static final Pattern partialMatcher = Pattern.compile("L" + fullMatcher.pattern() + ";");
 
     @SneakyThrows
