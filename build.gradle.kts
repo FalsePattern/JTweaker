@@ -5,7 +5,7 @@ plugins {
 }
 
 group = "com.falsepattern"
-version = "0.3.0-dev"
+version = "0.3.0"
 
 kotlin {
     jvmToolchain(8)
