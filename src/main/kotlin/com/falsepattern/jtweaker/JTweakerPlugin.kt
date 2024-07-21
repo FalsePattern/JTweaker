@@ -10,7 +10,7 @@ class JTweakerPlugin: Plugin<Project> {
         tasks.register<RemoveStubTask>("removeStub").configure {
             targetDirectory.set(layout.buildDirectory.dir("classes"))
             dependsOn(JavaPlugin.CLASSES_TASK_NAME)
-            dependsOn(JavaPlugin.TEST_CLASSES_TASK_NAME)
+            mustRunAfter(JavaPlugin.TEST_CLASSES_TASK_NAME)
         }
     }
 }
