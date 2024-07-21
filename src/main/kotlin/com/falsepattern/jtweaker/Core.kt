@@ -28,42 +28,52 @@ object Core {
             val pool = clazz.constantPool
             val length = pool.length
             var modified = false
+            var prevLarge = false
             for (i in 1 until length) {
-                val constant = pool.getConstant<Constant>(i)
-                if (constant != null && constant.tag == Const.CONSTANT_Utf8) {
-                    val utf8 = constant as ConstantUtf8
-                    val bytes = utf8.bytes
-                    val matcher = fullMatcher.matcher(bytes)
-
-                    val resultBytes: String
-                    val matched: Boolean
-                    if (matcher.matches()) {
-                        modified = true
-                        matched = true
-                        resultBytes = matcher.group(1)
-                    } else {
-                        val partialMatcher = partialMatcher.matcher(bytes)
-                        if (partialMatcher.find()) {
-                            matched = true
-                            modified = true;
-                            val result = StringBuilder()
-                            var currPos = 0
-                            do {
-                                result.append(bytes, currPos, partialMatcher.start())
-                                result.append('L')
-                                result.append(partialMatcher.group(1))
-                                result.append(';')
-                                currPos = partialMatcher.end()
-                            } while (partialMatcher.find())
-                            result.append(bytes, currPos, bytes.length)
-                            resultBytes = result.toString()
-                        } else {
-                            matched = false
-                            resultBytes = bytes
-                        }
+                if (prevLarge) {
+                    prevLarge = false
+                    continue
+                }
+                val constant = pool.getConstant<Constant>(i) ?: continue
+                when(constant.tag) {
+                    Const.CONSTANT_Double, Const.CONSTANT_Long -> {
+                        prevLarge = true
                     }
-                    if (matched) {
-                        pool.setConstant(i, ConstantUtf8(resultBytes))
+                    Const.CONSTANT_Utf8 -> {
+                        val utf8 = constant as ConstantUtf8
+                        val bytes = utf8.bytes
+                        val matcher = fullMatcher.matcher(bytes)
+
+                        val resultBytes: String
+                        val matched: Boolean
+                        if (matcher.matches()) {
+                            modified = true
+                            matched = true
+                            resultBytes = matcher.group(1)
+                        } else {
+                            val partialMatcher = partialMatcher.matcher(bytes)
+                            if (partialMatcher.find()) {
+                                matched = true
+                                modified = true;
+                                val result = StringBuilder()
+                                var currPos = 0
+                                do {
+                                    result.append(bytes, currPos, partialMatcher.start())
+                                    result.append('L')
+                                    result.append(partialMatcher.group(1))
+                                    result.append(';')
+                                    currPos = partialMatcher.end()
+                                } while (partialMatcher.find())
+                                result.append(bytes, currPos, bytes.length)
+                                resultBytes = result.toString()
+                            } else {
+                                matched = false
+                                resultBytes = bytes
+                            }
+                        }
+                        if (matched) {
+                            pool.setConstant(i, ConstantUtf8(resultBytes))
+                        }
                     }
                 }
             }
