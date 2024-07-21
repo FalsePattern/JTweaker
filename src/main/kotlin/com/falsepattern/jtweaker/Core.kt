@@ -28,7 +28,7 @@ object Core {
             val pool = clazz.constantPool
             val length = pool.length
             var modified = false
-            for (i in 0 until length) {
+            for (i in 1 until length) {
                 val constant = pool.getConstant<Constant>(i)
                 if (constant != null && constant.tag == Const.CONSTANT_Utf8) {
                     val utf8 = constant as ConstantUtf8
