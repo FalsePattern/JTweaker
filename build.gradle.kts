@@ -5,21 +5,21 @@ plugins {
 }
 
 group = "com.falsepattern"
-version = "0.4.0"
+version = "0.5.0"
 
 kotlin {
-    jvmToolchain(8)
+    jvmToolchain(21)
 }
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(JavaVersion.VERSION_1_8.majorVersion)
+        languageVersion = JavaLanguageVersion.of(JavaVersion.VERSION_21.majorVersion)
         vendor = JvmVendorSpec.ADOPTIUM
     }
     withSourcesJar()
     withJavadocJar()
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 }
 
 tasks.withType(JavaCompile::class) {
@@ -71,18 +71,5 @@ repositories {
 
 dependencies {
     implementation(gradleApi())
-    implementation("org.apache.bcel:bcel:6.9.0")
-    compileOnly("org.projectlombok:lombok:1.18.34")
-    annotationProcessor("org.projectlombok:lombok:1.18.34")
-    testImplementation("org.junit.jupiter:junit-jupiter:5.7.1")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-}
-tasks.named<Test>("test") {
-    useJUnitPlatform()
-
-    maxHeapSize = "1G"
-
-    testLogging {
-        events("passed")
-    }
+    implementation("org.apache.bcel:bcel:6.10.0")
 }

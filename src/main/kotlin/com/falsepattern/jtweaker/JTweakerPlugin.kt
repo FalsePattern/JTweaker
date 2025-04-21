@@ -2,29 +2,20 @@ package com.falsepattern.jtweaker
 
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.UnknownTaskException
-import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.tasks.compile.AbstractCompile
 import org.gradle.kotlin.dsl.register
+import org.gradle.kotlin.dsl.withType
 
 class JTweakerPlugin: Plugin<Project> {
-    override fun apply(target: Project) = with(target) {
-        tasks.register<RemoveStubTask>("removeStub").configure {
-            targetDirectory.set(layout.buildDirectory.dir("classes"))
-            mustRunAfter(JavaPlugin.CLASSES_TASK_NAME)
-        }
-        tasks.register<RemoveStubTask>("removeStubTests").configure {
-            targetDirectory.set(layout.buildDirectory.dir("classes"))
-            dependsOn(JavaPlugin.TEST_CLASSES_TASK_NAME)
-        }
-        afterEvaluate {
-            tasks.named(JavaPlugin.CLASSES_TASK_NAME).configure {
-                finalizedBy("removeStub")
+    override fun apply(target: Project): Unit = with(target) {
+        tasks.withType<AbstractCompile> {
+            val removalTask = tasks.register<RemoveStubTask>("${name}RemoveStubs")
+            removalTask.configure {
+                targets.set(this@withType.outputs.files)
+                group = "jtweaker"
+                dependsOn(this@withType)
             }
-            try {
-                tasks.named(JavaPlugin.TEST_CLASSES_TASK_NAME).configure {
-                    finalizedBy("removeStubTests")
-                }
-            } catch (_: UnknownTaskException) {}
+            finalizedBy(removalTask)
         }
     }
 }
